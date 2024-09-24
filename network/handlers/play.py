@@ -1,5 +1,8 @@
 import socket
 
+from nbt.nbt import TAG_Compound
+
+from entity.player.player import Player
 from events import event_dispatcher
 from network.handlers.configuration import PacketInPluginMessage
 from network.packet import PacketInRaw, PacketIn, PacketOut
@@ -64,7 +67,16 @@ class PacketOutSetCenterChunk(PacketOut):
         self.buffer.write_varint(z)
 
 
-async def on_confirm_teleport(client: socket.socket, packet: PacketInRaw):
+class PacketOutChunkData(PacketOut):
+    def __init__(self, x: int, z: int, heightmaps: TAG_Compound, data: bytes):
+        super().__init__(0x25)
+        self.buffer.write_int(x)
+        self.buffer.write_int(z)
+        self.buffer.write_compound(heightmaps)
+        self.buffer.write_bytes(data)
+
+
+async def on_confirm_teleport(client: Player, packet: PacketInRaw):
     print("Teleport confirm")
     new_packet = PacketInConfirmTeleport(packet)
     print(f"Teleport ID: {new_packet.teleport_id.value}")
@@ -72,7 +84,7 @@ async def on_confirm_teleport(client: socket.socket, packet: PacketInRaw):
     await event_dispatcher.fire(event_dispatcher.TeleportConfirmEvent(client, new_packet.teleport_id.value))
 
 
-async def on_plugin_message_play(client: socket.socket, packet: PacketInRaw):
+async def on_plugin_message_play(client: Player, packet: PacketInRaw):
     print("Plugin message")
 
     new_packet = PacketInPluginMessage(packet)
@@ -80,7 +92,7 @@ async def on_plugin_message_play(client: socket.socket, packet: PacketInRaw):
     print(f"Channel: {new_packet.channel}, Data: {new_packet.data}")
 
 
-async def on_player_position(client: socket.socket, packet: PacketInRaw):
+async def on_player_position(client: Player, packet: PacketInRaw):
     print("Player position")
 
     new_packet = PacketInPlayerPosition(packet)
@@ -88,7 +100,7 @@ async def on_player_position(client: socket.socket, packet: PacketInRaw):
     print(f"x: {new_packet.absolute_x} y: {new_packet.absolute_feet_y} z: {new_packet.absolute_z} on_ground: {new_packet.on_ground}")
 
 
-async def on_player_position_and_rotation(client: socket.socket, packet: PacketInRaw):
+async def on_player_position_and_rotation(client: Player, packet: PacketInRaw):
     print("Position and rotation")
 
     new_packet = PacketInPlayerPositionAndRotation(packet)
@@ -97,7 +109,7 @@ async def on_player_position_and_rotation(client: socket.socket, packet: PacketI
           f"yaw: {new_packet.yaw} pitch: {new_packet.pitch}")
 
 
-async def on_player_rotation(client: socket.socket, packet: PacketInRaw):
+async def on_player_rotation(client: Player, packet: PacketInRaw):
     print("Player rotation")
 
     new_packet = PacketInPlayerRotation(packet)

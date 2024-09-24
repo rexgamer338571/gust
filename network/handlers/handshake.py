@@ -1,5 +1,6 @@
 import socket
 
+from entity.player.player import Player
 from network.packet import PacketIn, PacketInRaw
 import util.state
 
@@ -11,10 +12,10 @@ class PacketInHandshake(PacketIn):
         self.next_state = raw.buffer.data[-1]
 
 
-async def on_handshake(c: socket.socket, p: PacketInRaw):
+async def on_handshake(c: Player, p: PacketInRaw):
     new_packet = PacketInHandshake(p)
 
-    print("Handshake from: ", c.getpeername())
+    print("Handshake from: ", c.sock.getpeername())
     print(new_packet.protocol_version.value, new_packet.address)
     print("New state: ", new_packet.next_state)
     util.state.set_state(new_packet.next_state)

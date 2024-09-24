@@ -1,5 +1,6 @@
 import socket
 
+from entity.player.player import Player
 from network.packet import PacketInRaw, PacketIn, PacketOut, PacketByteBuf
 from util import state
 
@@ -18,7 +19,7 @@ class PacketOutLoginSuccess(PacketOut):
         self.buffer.write_varint(0)
 
 
-async def on_login_start(client: socket.socket, packet: PacketInRaw):
+async def on_login_start(client: Player, packet: PacketInRaw):
     print("Login start")
 
     new_packet = PacketInLoginStart(packet)
@@ -30,7 +31,7 @@ async def on_login_start(client: socket.socket, packet: PacketInRaw):
     await response.send(client)
 
 
-async def on_login_ack(client: socket.socket, packet: PacketInRaw):
+async def on_login_ack(client: Player, packet: PacketInRaw):
     print("Login acknowledged, switching state to CONFIGURATION")
 
     state.set_state(state.CONFIGURATION)

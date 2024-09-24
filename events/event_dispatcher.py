@@ -1,6 +1,7 @@
 import socket
 from typing import Any
 
+from entity.player.player import Player
 from network.packet import PacketInRaw
 from util.state import states, get_state
 
@@ -10,8 +11,8 @@ class Event:
 
 
 class PlayerEvent(Event):
-    def __init__(self, client: socket.socket):
-        self.client: socket.socket = client
+    def __init__(self, client: Player):
+        self.client: Player = client
 
 
 class HandlersModifiedEvent(Event):
@@ -22,7 +23,7 @@ class HandlersModifiedEvent(Event):
 
 
 class PacketInEvent(PlayerEvent):
-    def __init__(self, c: socket.socket, p: PacketInRaw):
+    def __init__(self, c: Player, p: PacketInRaw):
         super().__init__(c)
         self.packet = p
 
@@ -31,7 +32,7 @@ class PacketInEvent(PlayerEvent):
 
 
 class TeleportConfirmEvent(PlayerEvent):
-    def __init__(self, l: socket.socket, teleport_id: int):
+    def __init__(self, l: Player, teleport_id: int):
         super().__init__(l)
         self.teleport_id = teleport_id
 
