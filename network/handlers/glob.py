@@ -31,16 +31,15 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
 
     for x in range(-2, 2):
         for z in range(-2, 2):
-            containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
-            biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
+            # containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
+            # biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
 
             # for i in range(4096):
             #     container = PalettedContainer(0, bytearray([0xa]))
             #     containers.append(container)
 
-            chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), ChunkSection(4096, containers, biomes).write())
+            chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), ChunkSection(4096, [PalettedContainer(1)], [PalettedContainer(1)]).write())
             await chunk_packet.send(event.client)
-
 
 
 async def register_global():

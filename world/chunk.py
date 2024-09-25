@@ -59,13 +59,22 @@ def heightmap():
 
 
 class PalettedContainer:
-    def __init__(self, bpe: int, palette, *data_array: int):         # vint len + list of i64
+    # theaiguy_ start
+    def __init__(self, block: int):
         self.buffer = PacketByteBuf(bytearray())
-        self.buffer.write_varint(bpe)
-        self.buffer.write_bytes(palette)
-        self.buffer.write_varint(len(data_array))
-        for i in data_array:
-            self.buffer.write_long(i)
+        self.buffer.write_varint(0)  # a BPE of 0, meaining the palette is single-valued
+        self.buffer.write_varint(block)  # the aforementioned single value of the palette
+        self.buffer.write_varint(
+            0)  # the length of the data array. it is 0, so no data follows. it is empty because the palette is single-valued, meaning that every block will be the same as that single value
+    # theaiguy_ end
+
+    # def __init__(self, bpe: int, palette, *data_array: int):         # vint len + list of i64
+    #     self.buffer = PacketByteBuf(bytearray())
+    #     self.buffer.write_varint(bpe)
+    #     self.buffer.write_bytes(palette)
+    #     self.buffer.write_varint(len(data_array))
+    #     for i in data_array:
+    #         self.buffer.write_long(i)
 
 
 class ChunkSection:

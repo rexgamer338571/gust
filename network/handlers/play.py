@@ -76,9 +76,12 @@ class PacketOutChunkData(PacketOut):
         self.buffer.write_varint(len(data))
         self.buffer.write_bytes(data)
 
-        # self.buffer.write_varint(0)
-        # self.buffer.write_bytes(0b11111111111111111111111111)
+        self.buffer.write_varint(0)
+        self.buffer.write_varint(0)
+        self.buffer.write_varint(0)
+        self.buffer.write_varint(0)
 
+        self.buffer.write_varint(0)
 
 async def on_confirm_teleport(client: Player, packet: PacketInRaw):
     print("Teleport confirm")
