@@ -64,8 +64,14 @@ class PacketByteBuf:
     def read_remaining(self) -> bytes:
         return self.get_data()[self.index:]
 
+    def write_short(self, s: int):
+        self.write_bytes(struct.pack('h', s))
+
     def write_int(self, i: int):
         self.write_bytes(struct.pack('i', i))
+
+    def write_long(self, l: int):
+        self.write_bytes(struct.pack('q', l))
 
     def write_bool(self, b: bool):
         self.write_bytes(struct.pack('?', b))

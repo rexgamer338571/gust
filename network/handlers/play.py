@@ -68,12 +68,16 @@ class PacketOutSetCenterChunk(PacketOut):
 
 
 class PacketOutChunkData(PacketOut):
-    def __init__(self, x: int, z: int, heightmaps: TAG_Compound, data: bytes):
+    def __init__(self, x: int, z: int, heightmaps: bytes, data: bytes):
         super().__init__(0x25)
         self.buffer.write_int(x)
         self.buffer.write_int(z)
-        self.buffer.write_compound(heightmaps)
+        self.buffer.write_bytes(heightmaps)
+        self.buffer.write_varint(len(data))
         self.buffer.write_bytes(data)
+
+        # self.buffer.write_varint(0)
+        # self.buffer.write_bytes(0b11111111111111111111111111)
 
 
 async def on_confirm_teleport(client: Player, packet: PacketInRaw):

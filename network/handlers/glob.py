@@ -5,6 +5,7 @@ from network.handlers.login import *
 from network.handlers.play import *
 from network.handlers.status import *
 from util.state import get_state, HANDSHAKE, LOGIN, CONFIGURATION, STATUS, PLAY
+from world.chunk import ChunkSection, PalettedContainer
 
 
 async def global_handle_packet(event: PacketInEvent):
@@ -27,6 +28,19 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
 
     response2 = PacketOutSetCenterChunk(0, 0)
     await response2.send(event.client)
+
+    for x in range(-2, 2):
+        for z in range(-2, 2):
+            containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
+            biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
+
+            # for i in range(4096):
+            #     container = PalettedContainer(0, bytearray([0xa]))
+            #     containers.append(container)
+
+            chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), ChunkSection(4096, containers, biomes).write())
+            await chunk_packet.send(event.client)
+
 
 
 async def register_global():
