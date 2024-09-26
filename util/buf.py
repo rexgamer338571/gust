@@ -40,10 +40,10 @@ class PacketByteBuf:
         self.data += bytez
 
     def write_float(self, f: float):
-        self.write_bytes(struct.pack('f', f))
+        self.write_bytes(struct.pack('>f', f))
 
     def read_float(self) -> float:
-        return struct.unpack('f', self.read_bytes(4))[0]
+        return struct.unpack('>f', self.read_bytes(4))[0]
 
     def write_double(self, d: float):
         self.write_bytes(struct.pack('d', d))
@@ -68,7 +68,7 @@ class PacketByteBuf:
         self.write_bytes(struct.pack('h', s))
 
     def write_int(self, i: int):
-        self.write_bytes(struct.pack('i', i))
+        self.write_bytes(struct.pack('>i', i))
 
     def write_long(self, l: int):
         self.write_bytes(struct.pack('q', l))

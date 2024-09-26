@@ -8,6 +8,10 @@ from util.state import get_state, HANDSHAKE, LOGIN, CONFIGURATION, STATUS, PLAY
 from world.chunk import ChunkSection, PalettedContainer
 
 
+async def noop(a, b):
+    pass
+
+
 async def global_handle_packet(event: PacketInEvent):
     packet = event.packet
 
@@ -29,8 +33,8 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
     response2 = PacketOutSetCenterChunk(0, 0)
     await response2.send(event.client)
 
-    for x in range(-2, 2):
-        for z in range(-2, 2):
+    for x in range(-10, 10):
+        for z in range(-10, 10):
             # containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
             # biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
 
@@ -38,7 +42,12 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
             #     container = PalettedContainer(0, bytearray([0xa]))
             #     containers.append(container)
 
-            chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), ChunkSection(4096, [PalettedContainer(1)], [PalettedContainer(1)]).write())
+            barr = bytearray()
+
+            for i in range(24):
+                barr += ChunkSection(4096, [PalettedContainer(1)], [PalettedContainer(1)]).write()
+
+            chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), barr)
             await chunk_packet.send(event.client)
 
 
@@ -64,6 +73,10 @@ async def register_packets():
     register_packet(PLAY, 0x17, on_player_position)
     register_packet(PLAY, 0x18, on_player_position_and_rotation)
     register_packet(PLAY, 0x19, on_player_rotation)
+    register_packet(PLAY, 0x20, noop)               # abilities
+    register_packet(PLAY, 0x21, noop)               # block break?
+    register_packet(PLAY, 0x22, noop)               # sneak
+    register_packet(PLAY, 0x33, noop)               # hit
 
 
 async def register_all():

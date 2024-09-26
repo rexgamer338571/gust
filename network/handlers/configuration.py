@@ -2,6 +2,7 @@ import asyncio
 import socket
 
 from entity import tracker
+from entity.player.player import Player
 from entity.tracker import next_teleport_id
 from network.packet import PacketInRaw, PacketIn, PacketOut
 from util import state
@@ -126,7 +127,7 @@ class PacketOutSynchronizePlayerPosition(PacketOut):
         self.buffer.write_varint(next_teleport_id())
 
 
-async def _brand_response(client: socket.socket):
+async def _brand_response(client: Player):
     # if new_packet.channel == "minecraft:brand":
     print("Responding with brand response")
 
@@ -148,7 +149,7 @@ async def _brand_response(client: socket.socket):
     await fc.send(client)
 
 
-async def on_client_information(client: socket.socket, packet: PacketInRaw):
+async def on_client_information(client: Player, packet: PacketInRaw):
     print("Client information")
 
     new_packet = PacketInClientInformation(packet)
@@ -160,7 +161,7 @@ async def on_client_information(client: socket.socket, packet: PacketInRaw):
     await _brand_response(client)
 
 
-async def on_plugin_message(client: socket.socket, packet: PacketInRaw):
+async def on_plugin_message(client: Player, packet: PacketInRaw):
     print("Plugin message")
 
     new_packet = PacketInPluginMessage(packet)
@@ -168,7 +169,7 @@ async def on_plugin_message(client: socket.socket, packet: PacketInRaw):
     print(f"Channel: {new_packet.channel}, Data: {new_packet.data}")
 
 
-async def on_ack_finish_configuration(client: socket.socket, packet: PacketInRaw):
+async def on_ack_finish_configuration(client: Player, packet: PacketInRaw):
     print("Acknowledged finish configuration")
     print("Sending login (play)")
 
@@ -180,7 +181,7 @@ async def on_ack_finish_configuration(client: socket.socket, packet: PacketInRaw
 
     # difficulty = PacketOutChangeDifficulty(0, True)
     # abilities = PacketOutPlayerAbilities(False, False, False, True, 0.0, 0.0)
-    sync_pos = PacketOutSynchronizePlayerPosition(10.0, 10.0, 10.0, 50.0, 50.0, 0)
+    sync_pos = PacketOutSynchronizePlayerPosition(10.0, 300.0, 10.0, 50.0, 50.0, 0)
     # await difficulty.send(client)
     # await abilities.send(client)
     await sync_pos.send(client)
