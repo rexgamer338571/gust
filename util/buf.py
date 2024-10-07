@@ -18,6 +18,14 @@ class PacketByteBuf:
     def __str__(self):
         return str(self.data)
 
+    @staticmethod
+    def of_file(path: str):
+        return PacketByteBuf(open(path, 'rb').read())
+
+    @staticmethod
+    def empty():
+        return PacketByteBuf(bytearray())
+
     def flush(self):
         self.index = 0
         self.set_data(bytearray())
@@ -46,10 +54,13 @@ class PacketByteBuf:
         return struct.unpack('>f', self.read_bytes(4))[0]
 
     def write_double(self, d: float):
-        self.write_bytes(struct.pack('d', d))
+        self.write_bytes(struct.pack('>d', d))
 
     def read_double(self) -> float:
-        return struct.unpack('d', self.read_bytes(8))[0]
+        return struct.unpack('>d', self.read_bytes(8))[0]
+
+    def read_int(self) -> int:
+        return struct.unpack('>i', self.read_bytes(4))[0]
 
     def write_at_front(self, bytez: bytes):
         self.set_data(bytez + self.data)

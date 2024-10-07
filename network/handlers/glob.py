@@ -1,3 +1,4 @@
+from anvil.anvilconv import load_chunk
 from events.event_dispatcher import register, PacketInEvent, register_packet, TeleportConfirmEvent
 from network.handlers.configuration import *
 from network.handlers.handshake import *
@@ -35,6 +36,8 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
 
     for x in range(-10, 10):
         for z in range(-10, 10):
+            load_chunk(x, z)
+
             # containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
             # biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
 
@@ -42,13 +45,13 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
             #     container = PalettedContainer(0, bytearray([0xa]))
             #     containers.append(container)
 
-            barr = bytearray()
-
-            for i in range(24):
-                barr += ChunkSection(4096, [PalettedContainer(1)], [PalettedContainer(1)]).write()
-
-            chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), barr)
-            await chunk_packet.send(event.client)
+            # barr = bytearray()
+            #
+            # for i in range(24):
+            #     barr += ChunkSection(4096, [PalettedContainer(1)], [PalettedContainer(1)]).write()
+            #
+            # chunk_packet = PacketOutChunkData(x, z, bytearray([0x0a, 0x00]), barr)
+            # await chunk_packet.send(event.client)
 
 
 async def register_global():
@@ -69,10 +72,12 @@ async def register_packets():
     register_packet(CONFIGURATION, 0x02, on_ack_finish_configuration)
 
     register_packet(PLAY, 0x00, on_confirm_teleport)
+    register_packet(PLAY, 0x09, on_client_information_play)
     register_packet(PLAY, 0x10, on_plugin_message_play)
     register_packet(PLAY, 0x17, on_player_position)
     register_packet(PLAY, 0x18, on_player_position_and_rotation)
     register_packet(PLAY, 0x19, on_player_rotation)
+    register_packet(PLAY, 0x1a, on_player_on_ground)
     register_packet(PLAY, 0x20, noop)               # abilities
     register_packet(PLAY, 0x21, noop)               # block break?
     register_packet(PLAY, 0x22, noop)               # sneak

@@ -1,5 +1,6 @@
 import asyncio
 import socket
+from concurrent.futures import ProcessPoolExecutor
 from threading import Thread
 
 import ticker.ticker
@@ -10,7 +11,7 @@ from events.event_dispatcher import fire, PacketInEvent
 from network.packet import PacketInRaw, PacketByteBuf
 
 
-ticker_thread = Thread(target=ticker.ticker.start, name="ticker")
+# ticker_thread = Thread(target=ticker.ticker.start, name="ticker")
 
 
 async def handle_connection(client: socket.socket):
@@ -47,7 +48,8 @@ async def run_server():
 
     loop = asyncio.get_event_loop()
 
-    ticker_thread.start()
+    # ticker_thread.start()
+    # loop.run_in_executor(ProcessPoolExecutor(), ticker.ticker.start)
 
     while True:
         client, _ = await loop.sock_accept(server)

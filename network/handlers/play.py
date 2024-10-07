@@ -1,11 +1,17 @@
+import io
+import random
 import socket
 
+import nbtlib
 from nbt.nbt import TAG_Compound
 
+from anvil.anvilloader import AnvilLoader
 from entity.player.player import Player
 from events import event_dispatcher
-from network.handlers.configuration import PacketInPluginMessage
+from network.handlers.configuration import PacketInPluginMessage, PacketInClientInformation
 from network.packet import PacketInRaw, PacketIn, PacketOut
+from util.bitset import BitSet
+from world.chunk import which_mca
 
 
 class PacketInConfirmTeleport(PacketIn):
@@ -35,6 +41,11 @@ class PacketInPlayerPosition(PacketIn):
         self.absolute_x = raw.buffer.read_double()
         self.absolute_feet_y = raw.buffer.read_double()
         self.absolute_z = raw.buffer.read_double()
+        self.on_ground = raw.buffer.read_bool()
+
+
+class PacketInOnGround(PacketIn):
+    def __init__(self, raw: PacketInRaw):
         self.on_ground = raw.buffer.read_bool()
 
 
@@ -72,19 +83,66 @@ class PacketOutChunkData(PacketOut):
         super().__init__(0x25)
         self.buffer.write_int(x)
         self.buffer.write_int(z)
+
+        mca = which_mca(x, z)
+        anvil_loader = AnvilLoader(f"C:\\Users\\wojci\\AppData\\Roaming\\.minecraft\\saves\\New World (8)\\region\\r.{int(mca[0])}.{int(mca[1])}.mca")
+        preloaded_mca = anvil_loader.load()
+        loaded_mca = preloaded_mca.load()
+
         self.buffer.write_bytes(heightmaps)
         self.buffer.write_varint(len(data))
-        self.buffer.write_bytes(data)
+
+        for chunk in loaded_mca:
+            # if chunk.compression_type == 2:         # zlib
+            if chunk.failed:
+                continue
+
+            root_chunk: nbtlib.Compound = chunk.decompress_zlib()
+            maps_compound: nbtlib.Compound = root_chunk["Heightmaps"]
+            _ = io.BytesIO()
+            maps_compound.write(_)
+            print(_.getvalue())
+            self.buffer.write_bytes(bytearray([0xa]) + _.getvalue() + bytearray([0]))
 
         self.buffer.write_varint(0)
 
+        # sky_light_mask = BitSet(1, [0b1 for i in range(24 + 2)])
+        # block_light_mask = BitSet(1, [0b1 for i in range(24 + 2)])
+        # empty_sky_light_mask = BitSet(1, [0b0 for i in range(24 + 2)])
+        # empty_block_light_mask = BitSet(1, [0b0 for i in range(24 + 2)])
+
+        # self.buffer.write_bytes(sky_light_mask.get())
+        # self.buffer.write_bytes(block_light_mask.get())
+        # self.buffer.write_bytes(empty_sky_light_mask.get())
+        # self.buffer.write_bytes(empty_block_light_mask.get())
+
+        self.buffer.write_varint(1)
+        self.buffer.write_bytes(0b11111111_11111111_11111111_11.to_bytes(length=4, byteorder='big'))
+        self.buffer.write_varint(1)
+        self.buffer.write_bytes(0b11111111111111111111111111.to_bytes(length=4, byteorder='big'))
         self.buffer.write_varint(0)
+        self.buffer.write_varint(0)
+
+        self.buffer.write_varint(24 + 2)
+
+        self.buffer.write_varint(2048)
+        self.buffer.write_bytes(bytearray([0b10011001 for i in range(2048)]))
+
+        self.buffer.write_varint(2048)
+        self.buffer.write_bytes(bytearray([0b10011001 for i in range(2048)]))
+
         self.buffer.write_varint(0)
         self.buffer.write_varint(0)
         self.buffer.write_varint(0)
 
         self.buffer.write_varint(0)
         self.buffer.write_varint(0)
+
+
+class PacketPlayOutKeepAlive(PacketOut):
+    def __init__(self):
+        super().__init__(0x24)
+        self.buffer.write_long(random.randint(0, 9223372036854775806))
 
 
 async def on_confirm_teleport(client: Player, packet: PacketInRaw):
@@ -93,6 +151,16 @@ async def on_confirm_teleport(client: Player, packet: PacketInRaw):
     print(f"Teleport ID: {new_packet.teleport_id.value}")
 
     await event_dispatcher.fire(event_dispatcher.TeleportConfirmEvent(client, new_packet.teleport_id.value))
+
+
+async def on_client_information_play(client: Player, packet: PacketInRaw):
+    print("Client information")
+
+    new_packet = PacketInClientInformation(packet)
+
+    print(f"Locale: {new_packet.locale}, View distance: {new_packet.view_distance}, Chat mode: {new_packet.chat_mode}, "
+          f"Chat colors: {new_packet.chat_colors}, Skin parts: {new_packet.displayed_skin_parts}, Main hand: {new_packet.main_hand}, "
+          f"Text filtering: {new_packet.enable_text_filtering}, Server listing: {new_packet.allow_server_listings}")
 
 
 async def on_plugin_message_play(client: Player, packet: PacketInRaw):
@@ -126,3 +194,11 @@ async def on_player_rotation(client: Player, packet: PacketInRaw):
     new_packet = PacketInPlayerRotation(packet)
 
     print(f"yaw: {new_packet.yaw} pitch: {new_packet.pitch} on_ground: {new_packet.on_ground}")
+
+
+async def on_player_on_ground(client: Player, packet: PacketInRaw):
+    print("On ground")
+
+    new_packet = PacketInOnGround(packet)
+
+    print("Is on ground:", new_packet.on_ground)

@@ -20,3 +20,5 @@ class Player:
         self.sock = sock
         self.buffer = PlayerByteBuf(self.sock)
         self.entity_id = tracker.next_entity_id()
+        self.last_keepalive = 0
+

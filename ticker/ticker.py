@@ -2,23 +2,26 @@ import socket
 import time
 
 from entity.player.player import Player
+from network.handlers.play import PacketPlayOutKeepAlive
 
 _tick = 0
-_last_keepalive = 0
 
 players: list[Player] = []
 
 
-def tick():
-    global _tick, _last_keepalive
+async def tick():
+    global _tick
 
-    if (_tick - _last_keepalive) > 20 * 15:
-        _last_keepalive = _tick
+    for player in players:
+        if (_tick - player.last_keepalive) > 20 * 15:
+            player.last_keepalive = _tick
+            await PacketPlayOutKeepAlive().send(player)
+            print("Sending keepalive", player.sock.getpeername())
 
     _tick += 1
 
 
-def start():
+async def start():
     while True:
-        tick()
+        await tick()
         time.sleep(1 / 20)

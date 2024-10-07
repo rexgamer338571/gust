@@ -1,6 +1,7 @@
 import json
 import socket
 
+from entity.player.player import Player
 from network.packet import PacketInRaw, PacketOut, PacketIn
 
 
@@ -21,7 +22,7 @@ class PacketOutPongResponse(PacketOut):
         self.buffer.write_bytes(request.payload)
 
 
-async def on_status_request(client: socket.socket, packet: PacketInRaw):
+async def on_status_request(client: Player, packet: PacketInRaw):
     print("Status request")
 
     response_json = json.dumps({
@@ -50,7 +51,7 @@ async def on_status_request(client: socket.socket, packet: PacketInRaw):
     await response.send(client)
 
 
-async def on_ping_request(client: socket.socket, packet: PacketInRaw):
+async def on_ping_request(client: Player, packet: PacketInRaw):
     print("Ping request")
     new_packet = PacketInPingRequest(packet)
     print("Payload:", new_packet.payload)

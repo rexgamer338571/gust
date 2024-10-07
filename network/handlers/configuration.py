@@ -67,8 +67,8 @@ class PacketOutLoginPlay(PacketOut):
         self.buffer.write_string("minecraft:overworld")
 
         self.buffer.write_varint(2)
-        self.buffer.write_varint(2)
-        self.buffer.write_varint(5)
+        self.buffer.write_varint(32)
+        self.buffer.write_varint(32)
         self.buffer.write_bool(False)
         self.buffer.write_bool(True)
         self.buffer.write_bool(False)

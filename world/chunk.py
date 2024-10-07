@@ -1,3 +1,4 @@
+import math
 from math import ceil, log2
 
 from nbt.nbt import TAG_Compound, TAG_List, TAG_Long
@@ -96,4 +97,8 @@ class ChunkSection:
         return buf.get_data()
 
 
-print(heightmap())
+def which_mca(x: int, z: int) -> tuple[int, int]:
+    return math.floor(x / 32), math.floor(z / 32)
+
+
+# print(heightmap())
