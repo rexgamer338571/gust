@@ -5,6 +5,7 @@ import socket
 import nbtlib
 from nbt.nbt import TAG_Compound
 
+from anvil.anvilconv import load_chunk
 from anvil.anvilloader import AnvilLoader
 from entity.player.player import Player
 from events import event_dispatcher
@@ -79,64 +80,98 @@ class PacketOutSetCenterChunk(PacketOut):
 
 
 class PacketOutChunkData(PacketOut):
-    def __init__(self, x: int, z: int, heightmaps: bytes, data: bytes):
+    def __init__(self, x: int, z: int):
         super().__init__(0x25)
+
         self.buffer.write_int(x)
         self.buffer.write_int(z)
+        chunk_data = load_chunk(x, z)
 
-        mca = which_mca(x, z)
-        anvil_loader = AnvilLoader(f"C:\\Users\\wojci\\AppData\\Roaming\\.minecraft\\saves\\New World (8)\\region\\r.{int(mca[0])}.{int(mca[1])}.mca")
-        preloaded_mca = anvil_loader.load()
-        loaded_mca = preloaded_mca.load()
+        if chunk_data == b'':
+            self.fail = True
+            return
+        else:
+            self.fail = False
 
-        self.buffer.write_bytes(heightmaps)
-        self.buffer.write_varint(len(data))
+        self.buffer.write_bytes(chunk_data)     # heightmaps, size of data, data array
 
-        for chunk in loaded_mca:
-            # if chunk.compression_type == 2:         # zlib
-            if chunk.failed:
-                continue
+        self.buffer.write_varint(0)             # block entity count
 
-            root_chunk: nbtlib.Compound = chunk.decompress_zlib()
-            maps_compound: nbtlib.Compound = root_chunk["Heightmaps"]
-            _ = io.BytesIO()
-            maps_compound.write(_)
-            print(_.getvalue())
-            self.buffer.write_bytes(bytearray([0xa]) + _.getvalue() + bytearray([0]))
+        sky_light_mask = int("0b" + ("1"*26), 2)
+        block_light_mask = int("0b" + ("1"*26), 2)
 
-        self.buffer.write_varint(0)
+        empty_sky_light_mask = int("0b" + ("0"*26), 2)
+        empty_block_light_mask = int("0b" + ("0"*26), 2)
 
-        # sky_light_mask = BitSet(1, [0b1 for i in range(24 + 2)])
-        # block_light_mask = BitSet(1, [0b1 for i in range(24 + 2)])
-        # empty_sky_light_mask = BitSet(1, [0b0 for i in range(24 + 2)])
-        # empty_block_light_mask = BitSet(1, [0b0 for i in range(24 + 2)])
+        self.buffer.write_bytes(sky_light_mask.to_bytes(4))
+        self.buffer.write_bytes(block_light_mask.to_bytes(4))
+        self.buffer.write_bytes(empty_sky_light_mask.to_bytes(4))
+        self.buffer.write_bytes(empty_block_light_mask.to_bytes(4))
 
-        # self.buffer.write_bytes(sky_light_mask.get())
-        # self.buffer.write_bytes(block_light_mask.get())
-        # self.buffer.write_bytes(empty_sky_light_mask.get())
-        # self.buffer.write_bytes(empty_block_light_mask.get())
+        self.buffer.write_varint(26)            # same number as bits in skylight mask
+        self.buffer.write_varint(2048)          # length of the following array
+        self.buffer.write_bytes(int("0b" + ("1111"*26), 2).to_bytes(2048))      # the array
 
-        self.buffer.write_varint(1)
-        self.buffer.write_bytes(0b11111111_11111111_11111111_11.to_bytes(length=4, byteorder='big'))
-        self.buffer.write_varint(1)
-        self.buffer.write_bytes(0b11111111111111111111111111.to_bytes(length=4, byteorder='big'))
-        self.buffer.write_varint(0)
-        self.buffer.write_varint(0)
+        self.buffer.write_varint(26)  # same number as bits in skylight mask
+        self.buffer.write_varint(2048)  # length of the following array
+        self.buffer.write_bytes(int("0b" + ("1111" * 26), 2).to_bytes(2048))  # the array
 
-        self.buffer.write_varint(24 + 2)
+        # self.buffer.write_int(x)
+        # self.buffer.write_int(z)
 
-        self.buffer.write_varint(2048)
-        self.buffer.write_bytes(bytearray([0b10011001 for i in range(2048)]))
+        # mca = which_mca(x, z)
+        # anvil_loader = AnvilLoader(f"C:\\Users\\wojci\\AppData\\Roaming\\.minecraft\\saves\\New World (8)\\region\\r.{int(mca[0])}.{int(mca[1])}.mca")
+        # preloaded_mca = anvil_loader.load()
+        # loaded_mca = preloaded_mca.load()
+        #
+        # self.buffer.write_bytes(heightmaps)
+        # self.buffer.write_varint(len(data))
 
-        self.buffer.write_varint(2048)
-        self.buffer.write_bytes(bytearray([0b10011001 for i in range(2048)]))
+        # for chunk in loaded_mca:
+        #     # if chunk.compression_type == 2:         # zlib
+        #     if chunk.failed:
+        #         continue
+        #
+        #     root_chunk: nbtlib.Compound = chunk.decompress_zlib()
+        #     maps_compound: nbtlib.Compound = root_chunk["Heightmaps"]
+        #     _ = io.BytesIO()
+        #     maps_compound.write(_)
+        #     print(_.getvalue())
+        #     self.buffer.write_bytes(bytearray([0xa]) + _.getvalue() + bytearray([0]))
+        #
+        # self.buffer.write_varint(0)
+        #
+        # # sky_light_mask = BitSet(1, [0b1 for i in range(24 + 2)])
+        # # block_light_mask = BitSet(1, [0b1 for i in range(24 + 2)])
+        # # empty_sky_light_mask = BitSet(1, [0b0 for i in range(24 + 2)])
+        # # empty_block_light_mask = BitSet(1, [0b0 for i in range(24 + 2)])
+        #
+        # # self.buffer.write_bytes(sky_light_mask.get())
+        # # self.buffer.write_bytes(block_light_mask.get())
+        # # self.buffer.write_bytes(empty_sky_light_mask.get())
+        # # self.buffer.write_bytes(empty_block_light_mask.get())
 
-        self.buffer.write_varint(0)
-        self.buffer.write_varint(0)
-        self.buffer.write_varint(0)
-
-        self.buffer.write_varint(0)
-        self.buffer.write_varint(0)
+        # self.buffer.write_varint(1)
+        # self.buffer.write_bytes(0b11111111_11111111_11111111_11.to_bytes(length=4, byteorder='big'))
+        # self.buffer.write_varint(1)
+        # self.buffer.write_bytes(0b11111111111111111111111111.to_bytes(length=4, byteorder='big'))
+        # self.buffer.write_varint(0)
+        # self.buffer.write_varint(0)
+        #
+        # self.buffer.write_varint(24 + 2)
+        #
+        # self.buffer.write_varint(2048)
+        # self.buffer.write_bytes(bytearray([0b10011001 for i in range(2048)]))
+        #
+        # self.buffer.write_varint(2048)
+        # self.buffer.write_bytes(bytearray([0b10011001 for i in range(2048)]))
+        #
+        # self.buffer.write_varint(0)
+        # self.buffer.write_varint(0)
+        # self.buffer.write_varint(0)
+        #
+        # self.buffer.write_varint(0)
+        # self.buffer.write_varint(0)
 
 
 class PacketPlayOutKeepAlive(PacketOut):

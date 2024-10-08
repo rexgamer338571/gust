@@ -36,7 +36,13 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
 
     for x in range(-10, 10):
         for z in range(-10, 10):
-            load_chunk(x, z)
+            packet = PacketOutChunkData(x, z)
+
+            if packet.fail:
+                continue
+
+            print("Sending chunk", x, z)
+            await packet.send(event.client)
 
             # containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
             # biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
