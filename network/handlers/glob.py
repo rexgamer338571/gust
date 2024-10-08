@@ -63,6 +63,7 @@ async def register_packets():
     register_packet(HANDSHAKE, 0x00, on_handshake)
 
     register_packet(STATUS, 0x00, on_status_request)
+    register_packet(STATUS, 0x01, on_ping_request)
 
     register_packet(LOGIN, 0x00, on_login_start)
     register_packet(LOGIN, 0x03, on_login_ack)

@@ -3,6 +3,7 @@ import socket
 
 from entity.player.player import Player
 from network.packet import PacketInRaw, PacketOut, PacketIn
+from util.misc import get_server
 
 
 class PacketOutStatusResponse(PacketOut):
@@ -25,24 +26,19 @@ class PacketOutPongResponse(PacketOut):
 async def on_status_request(client: Player, packet: PacketInRaw):
     print("Status request")
 
+    server_handle = get_server()
+
     response_json = json.dumps({
         "version": {
-            "name": "1.20.4",
-            "protocol": 765
+            "name": server_handle.settings.version,
+            "protocol": server_handle.settings.protocol_version
         },
         "players": {
-            "max": 69,
-            "online": 0,
-            "sample": [
-                {
-                    "name": "NG5M",
-                    "id": "eecec455-8813-4271-8223-4b28d98bc706"
-                }
-            ]
+            "max": server_handle.settings.max_online,
+            "online": server_handle.online,
+            "sample": []
         },
-        "description": {
-            "text": "A Gust server"
-        },
+        "description": server_handle.settings.motd,
         "enforcesSecureChat": False,
         "previewsChat": False
     })

@@ -88,15 +88,12 @@ def load_chunk(x: int, z: int):
 
     data_array = PacketByteBuf.empty()
 
-    data_array.write_short(0xffff)
+    data_array.write_short(32767)
 
-    packet.write_int(x)             # chunk x
-    packet.write_int(z)             # chunk z
+    packet.write_int(x)  # chunk x
+    packet.write_int(z)  # chunk z
 
-    packet.write_bytes(heightmaps)  # heightmaps nbt
-
-
-
+    packet.write_bytes(heightmaps.getvalue())  # heightmaps nbt
 
 
 if __name__ == "__main__":
