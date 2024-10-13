@@ -62,13 +62,13 @@ def convert(path: str, out: str) -> None:
         chunk_x = parsed["xPos"].unpack()
         chunk_z = parsed["zPos"].unpack()
 
-        with open(out + "\\" + str(chunk_x) + "_" + str(chunk_z) + ".nbt", "wb") as f:
+        with open(out + "/" + str(chunk_x) + "_" + str(chunk_z) + ".nbt", "wb") as f:
             f.write(decompressed)
 
         continue
 
 
-out = "C:\\Users\\wojci\\Gust\\anvil\\test1"
+out = "/home/ng5m/PycharmProjects/gust/anvil/test"
 
 
 def get_palette_id(root: nbtlib.List[nbtlib.Compound], block_state: str) -> int:
@@ -108,12 +108,12 @@ def get_block_count(air_palette: int, bpe: int, data: nbtlib.List[nbtlib.Long]) 
     return count
 
 
-path = os.getcwd() + ("\\.." if os.getcwd().endswith("anvil") else "") + "\\datagen\\block\\blocks.json"
+path = os.getcwd() + ("/.." if os.getcwd().endswith("anvil") else "") + "/datagen/block/blocks.json"
 blocks_dict = json.loads(open(path, "r").read())
 
 
 def load_chunk(x: int, z: int) -> bytes:
-    name = out + "\\" + str(x) + "_" + str(z) + ".nbt"
+    name = out + "/" + str(x) + "_" + str(z) + ".nbt"
     print(name)
     if not os.path.isfile(name):
         return b''
@@ -191,13 +191,22 @@ def load_chunk(x: int, z: int) -> bytes:
         data_array.write_varint(len(real_data_array.get_data()))
         data_array.write_bytes(real_data_array.get_data())
 
-    packet.write_int(x)  # chunk x
-    packet.write_int(z)  # chunk z
+    p = PacketByteBuf.empty()
+
+    p.write_varint(0x25)
+
+    p.write_int(x)  # chunk x
+    p.write_int(z)  # chunk z
 
     real_heightmaps = bytearray([0x0a]) + heightmaps.getvalue() + bytearray([0x00])
 
-    packet.write_bytes(real_heightmaps)
+    p.write_bytes(real_heightmaps)
+
+    p.write_bytes(data_array.get_data())
     # packet.write_bytes(bytearray([0x0a, 0x00]))  # heightmaps nbt
+
+    packet.write_varint(len(p.get_data()))
+    packet.write_bytes(p.get_data())
 
     return packet.get_data()
 
@@ -205,6 +214,6 @@ def load_chunk(x: int, z: int) -> bytes:
 if __name__ == "__main__":
     chunk = load_chunk(0, 0)
     # load_chunk(0, 0)
-    # convert(
-    #     "C:\\Users\\wojci\\Downloads\\mmc-develop-win32\\MultiMC\\instances\\1.20.4 fabric\\.minecraft\\saves\\New World\\region\\r.0.0.mca",
-    #     out)
+    convert(
+        "/home/ng5m/.local/share/multimc/instances/1.20.4/.minecraft/saves/New World/region/r.0.0.mca",
+        out)

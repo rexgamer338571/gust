@@ -2,6 +2,7 @@ import asyncio
 import socket
 from typing import Any
 
+from anvil.chunk_io import make_chunks
 from entity.player.player import Player
 from events.event_dispatcher import PacketInEvent, fire
 from network.handlers.glob import register_all
@@ -30,6 +31,8 @@ class Server:
 
     async def _run(self):
         await register_all()
+
+        await make_chunks("/home/ng5m/.local/share/multimc/instances/1.20.4/.minecraft/saves/New World/region")
 
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(self.addr)

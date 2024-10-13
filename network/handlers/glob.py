@@ -1,10 +1,13 @@
+from anvil.a2 import extract_chunk_data, get_chunk_sections, chunk_sections_to_bytes, make_packet
 from anvil.anvilconv import load_chunk
+from anvil.chunk_io import MCAIO, ChunkIO, ReadyChunk
 from events.event_dispatcher import register, PacketInEvent, register_packet, TeleportConfirmEvent
 from network.handlers.configuration import *
 from network.handlers.handshake import *
 from network.handlers.login import *
 from network.handlers.play import *
 from network.handlers.status import *
+from util.debug_packet import debug
 from util.state import get_state, HANDSHAKE, LOGIN, CONFIGURATION, STATUS, PLAY
 from world.chunk import ChunkSection, PalettedContainer
 
@@ -26,7 +29,7 @@ async def global_handle_packet(event: PacketInEvent):
 async def global_teleport_confirm(event: TeleportConfirmEvent):
     if event.teleport_id != tracker.teleport_id:
         print("Invalid teleport ID")
-        return
+        # return
 
     response = PacketOutGameEvent(PacketOutGameEvent.START_WAITING_FOR_LEVEL_CHUNKS, 0.0)
     await response.send(event.client)
@@ -34,15 +37,31 @@ async def global_teleport_confirm(event: TeleportConfirmEvent):
     response2 = PacketOutSetCenterChunk(0, 0)
     await response2.send(event.client)
 
-    for x in range(-10, 10):
-        for z in range(-10, 10):
-            packet = PacketOutChunkData(x, z)
-
-            if packet.fail:
-                continue
-
+    for x in range(-2, 2):
+        for z in range(-2, 2):
             print("Sending chunk", x, z)
-            await packet.send(event.client)
+
+            chunk_io: ChunkIO = await extract_chunk_data("/home/ng5m/.local/share/multimc/instances/1.20.4/.minecraft"
+                                                         "/saves/New World/region", x, z)
+
+            sections: list[ChunkSection] = await get_chunk_sections(chunk_io)
+            bytez: bytes = await chunk_sections_to_bytes(*sections)
+
+            packet = await make_packet(x, z, chunk_io.get_decompressed_nbt()["Heightmaps"], bytez)
+
+            await asyncio.get_event_loop().sock_sendall(event.client.sock, packet.get_data())
+
+
+    # for x in range(-10, 10):
+    #     for z in range(-10, 10):
+
+            # packet = PacketOutChunkData(x, z)
+            #
+            # if packet.fail:
+            #     continue
+            #
+            # print("Sending chunk", x, z)
+            # await packet.send(event.client)
 
             # containers: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]
             # biomes: list[PalettedContainer] = [PalettedContainer(0, bytearray([0xa]))]

@@ -76,13 +76,13 @@ class PacketByteBuf:
         return self.get_data()[self.index:]
 
     def write_short(self, s: int):
-        self.write_bytes(struct.pack('h', s))
+        self.write_bytes(struct.pack('>h', s))
 
     def write_int(self, i: int):
         self.write_bytes(struct.pack('>i', i))
 
     def write_long(self, l: int):
-        self.write_bytes(struct.pack('q', l))
+        self.write_bytes(struct.pack('>q', l))
 
     def write_bool(self, b: bool):
         self.write_bytes(struct.pack('?', b))
@@ -111,19 +111,22 @@ class PacketByteBuf:
         return VarNum(total, self.index - b)
 
     def write_varint(self, val: int):
-        ret = b''
         if val < 0:
-            val = (1 << 32) + val
+            raise ValueError("VarInt too small")
+
+        if val > 0xFFFFFFFFF:
+            raise ValueError("VarInt too big")
+
+        ret = bytearray()
 
         while val >= 0x80:
             bits = val & 0x7F
+            ret.append(0x80 | bits)
             val >>= 7
-            ret += struct.pack('B', (0x80 | bits))
 
-        bits = val & 0x7F
-        ret += struct.pack('B', bits)
+        ret.append(val & 0x7F)
 
-        self.write_bytes(ret)
+        self.write_bytes(ret[::-1])
 
     def read_string(self) -> str:
         length = self.read_varint()

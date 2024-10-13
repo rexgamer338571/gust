@@ -4,6 +4,7 @@ import socket
 from entity import tracker
 from entity.player.player import Player
 from entity.tracker import next_teleport_id
+from events.event_dispatcher import TeleportConfirmEvent, fire
 from network.packet import PacketInRaw, PacketIn, PacketOut
 from util import state
 from util.var import pack_string, unpack_varint_socket
@@ -46,7 +47,7 @@ class PacketOutFeatureFlags(PacketOut):
 class PacketOutRegistryData(PacketOut):
     def __init__(self):
         super().__init__(0x05)
-        with open("datagen\\1.20.2.nbt", "rb") as a:
+        with open("datagen/1.20.2.nbt", "rb") as a:
             self.buffer.write_bytes(a.read())
 
 
@@ -179,9 +180,14 @@ async def on_ack_finish_configuration(client: Player, packet: PacketInRaw):
     state.set_state(state.PLAY)
     print("Setting state to PLAY")
 
+    print("TRYING SYNC POSITION")
     # difficulty = PacketOutChangeDifficulty(0, True)
     # abilities = PacketOutPlayerAbilities(False, False, False, True, 0.0, 0.0)
-    sync_pos = PacketOutSynchronizePlayerPosition(10.0, 300.0, 10.0, 50.0, 50.0, 0)
-    # await difficulty.send(client)
-    # await abilities.send(client)
-    await sync_pos.send(client)
+
+    for i in range(10):
+        sync_pos = PacketOutSynchronizePlayerPosition(10.0, 300.0, 10.0, 50.0, 50.0, 0)
+        # await difficulty.send(client)
+        # await abilities.send(client)
+        await sync_pos.send(client)
+
+    # await fire(TeleportConfirmEvent(client, tracker.teleport_id))

@@ -6,7 +6,7 @@ from util.misc import _set_server, get_server, _set_root_dir
 if __name__ == "__main__":
     _set_root_dir(os.getcwd())
 
-    server = Server(("127.0.0.1", 25565),
+    server = Server(("127.0.0.1", 25566),
                     ServerSettings(
                         69,
                         {
